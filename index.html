@@ -1,1 +1,1234 @@
 
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#071329">
+<title>संकेतवाणी | Sign Language Learning</title>
+
+<!-- Google Font इंटरनेट से लोड होगा -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- MediaPipe Hands: वास्तविक हाथ के लैंडमार्क पहचानने के लिए -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<style>
+:root {
+  --bg: #071329;
+  --panel: #101f3c;
+  --panel2: #142849;
+  --blue: #3988ff;
+  --cyan: #32d7e8;
+  --yellow: #ffd45e;
+  --white: #f6f9ff;
+  --muted: #a6b6d0;
+  --border: rgba(164,195,255,.15);
+  --green: #45e0a3;
+  --red: #ff7185;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--white);
+  background:
+    radial-gradient(ellipse at 10% 0%, #163568 0%, transparent 36%),
+    radial-gradient(ellipse at 95% 30%, #10314c 0%, transparent 32%),
+    var(--bg);
+  font-family: Inter, "Noto Sans Devanagari", sans-serif;
+  min-height: 100vh;
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 4px;
+}
+.container { width: min(1160px, 92%); margin: auto; }
+header {
+  padding: 24px 0 18px;
+  border-bottom: 1px solid var(--border);
+}
+.header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+}
+.brand { display: flex; gap: 13px; align-items: center; }
+.brand-icon {
+  width: 53px; height: 53px; border-radius: 17px;
+  display: grid; place-items: center;
+  font-size: 27px;
+  background: linear-gradient(140deg, var(--blue), var(--cyan));
+  box-shadow: 0 8px 28px #278cff40;
+}
+.brand h1 { margin: 0; font-size: 27px; letter-spacing: -.7px; }
+.brand p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.status-pill {
+  display: flex; align-items: center; gap: 9px;
+  background: #142746; border: 1px solid var(--border);
+  border-radius: 30px; padding: 10px 15px;
+  font-size: 12px; color: var(--muted);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #8795ac; }
+.dot.live { background: var(--green); box-shadow: 0 0 12px var(--green); }
+.dot.error { background: var(--red); }
+
+.hero {
+  padding: 48px 0 32px;
+  display: grid; grid-template-columns: 1.4fr .8fr;
+  align-items: center; gap: 35px;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--cyan); font-size: 12px; font-weight: 800;
+  letter-spacing: 1.7px; text-transform: uppercase;
+}
+.hero h2 {
+  font-size: clamp(34px, 5vw, 57px); line-height: 1.17;
+  letter-spacing: -1.9px; margin: 17px 0;
+}
+.gradient-text {
+  background: linear-gradient(90deg, #5d9bff, #39e0e7);
+  color: transparent; background-clip: text;
+}
+.hero p { color: var(--muted); line-height: 1.85; max-width: 620px; font-size: 15px; }
+.hero-note {
+  padding: 22px; border-radius: 22px;
+  background: linear-gradient(145deg, #142c50, #10203b);
+  border: 1px solid var(--border);
+}
+.hero-note .big { font-size: 43px; margin-bottom: 12px; }
+.hero-note h3 { margin: 0 0 9px; font-size: 17px; }
+.hero-note p { font-size: 13px; margin: 0; }
+
+.tabs {
+  display: flex; gap: 8px; padding: 7px;
+  border: 1px solid var(--border); border-radius: 15px;
+  background: #09162c; margin: 8px 0 25px;
+  overflow-x: auto;
+}
+.tab {
+  border: 0; color: var(--muted); background: transparent;
+  padding: 13px 19px; border-radius: 10px;
+  white-space: nowrap; font-weight: 700; font-size: 13px;
+  transition: .2s;
+}
+.tab:hover { color: white; background: #152a49; }
+.tab.active {
+  color: white; background: linear-gradient(110deg, #2869d8, #148eaa);
+  box-shadow: 0 5px 18px #1e82ff30;
+}
+.page { display: none; animation: appear .3s ease; }
+.page.active { display: block; }
+@keyframes appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.section-heading {
+  display: flex; justify-content: space-between; align-items: end;
+  gap: 15px; flex-wrap: wrap; margin: 8px 0 20px;
+}
+.section-heading h2 { margin: 0; font-size: 24px; }
+.section-heading p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.card {
+  background: linear-gradient(145deg, rgba(19,39,71,.97), rgba(12,28,53,.97));
+  border: 1px solid var(--border); border-radius: 21px;
+  padding: 22px; box-shadow: 0 12px 38px #00000015;
+}
+.camera-layout {
+  display: grid; grid-template-columns: 1.4fr .75fr;
+  gap: 20px; align-items: start;
+}
+.camera-box {
+  width: 100%; position: relative; aspect-ratio: 4 / 3;
+  background: #030a16; border-radius: 15px; overflow: hidden;
+  border: 1px solid #263e61;
+}
+.camera-box video, .camera-box canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; transform: scaleX(-1);
+}
+.camera-box video { display: none; }
+.camera-box canvas { z-index: 2; }
+.camera-placeholder {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; padding: 22px;
+  color: var(--muted); gap: 11px;
+}
+.camera-placeholder .cam-icon { font-size: 45px; }
+.camera-placeholder strong { color: white; font-size: 16px; }
+.camera-placeholder span { font-size: 12px; line-height: 1.7; max-width: 300px; }
+.camera-badge {
+  position: absolute; z-index: 3; top: 13px; left: 13px;
+  border: 1px solid #ffffff24; border-radius: 20px;
+  background: #06152bd9; padding: 8px 11px;
+  display: flex; align-items: center; gap: 7px; font-size: 11px;
+}
+.camera-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-top: 14px; flex-wrap: wrap;
+}
+.small-muted { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.btn {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 11px 15px; color: white; background: #182e4e;
+  font-size: 12px; font-weight: 800; transition: .2s;
+}
+.btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.15); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: linear-gradient(110deg, #347cff, #148bb5); border: 0; }
+.btn.stop { color: #ff9dac; border-color: #8b3b52; background: #381c31; }
+.btn.yellow { color: #101c2e; background: var(--yellow); border: 0; }
+
+.result-card {
+  border-radius: 17px; padding: 22px; text-align: center;
+  background: linear-gradient(150deg, #1a3970, #123452);
+  border: 1px solid #4a83d653; margin-bottom: 14px;
+}
+.result-label { color: #c0d5ff; font-size: 11px; letter-spacing: 1px; font-weight: 800; }
+.result-letter {
+  font-size: 92px; line-height: 1.15; font-weight: 800;
+  color: white; margin: 10px 0;
+  text-shadow: 0 0 40px #46b9ff30;
+  min-height: 105px;
+}
+.result-name { color: var(--cyan); font-size: 13px; font-weight: 700; }
+.result-sub { color: #b5c9e6; font-size: 11px; line-height: 1.7; margin-top: 10px; }
+.word-box {
+  background: #09182f; border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px; margin-top: 12px;
+}
+.word-box label { display: block; color: var(--muted); font-size: 11px; margin-bottom: 9px; }
+.word-output {
+  min-height: 36px; overflow-wrap: anywhere;
+  font-size: 23px; font-weight: 800; color: var(--yellow);
+  letter-spacing: 2px;
+}
+.message {
+  margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+  font-size: 12px; line-height: 1.7; color: #cbdaf0;
+  background: #0b1a31; border: 1px solid var(--border);
+}
+.message.success { border-color: #2b8a6a; }
+.message.error { border-color: #9b4558; color: #ffc3cb; }
+.message.loading { border-color: #3776d2; }
+.guide {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-top: 22px;
+}
+.guide-item {
+  background: #0d1e37; border: 1px solid var(--border);
+  padding: 14px; border-radius: 13px;
+}
+.guide-item b { font-size: 12px; display: block; margin-bottom: 7px; }
+.guide-item span { font-size: 11px; line-height: 1.7; color: var(--muted); }
+
+.alphabet-grid {
+  display: grid; grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 12px;
+}
+.letter-card {
+  border: 1px solid var(--border); border-radius: 15px;
+  background: linear-gradient(145deg, #14294a, #0e1d36);
+  color: white; text-align: left; padding: 14px;
+  min-width: 0; transition: .2s;
+}
+.letter-card:hover {
+  border-color: #4ba6ff; transform: translateY(-3px);
+  background: #19345a;
+}
+.letter-card.selected { border-color: var(--yellow); box-shadow: 0 0 0 1px #ffd45e30; }
+.letter-symbol {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 11px; background: #24528a; color: #fff;
+  font-size: 21px; font-weight: 800; margin-bottom: 12px;
+}
+.letter-card strong { display: block; font-size: 13px; }
+.letter-card small {
+  display: block; color: var(--muted); font-size: 10px;
+  line-height: 1.6; margin-top: 6px; overflow-wrap: anywhere;
+}
+.chart-note {
+  padding: 14px 17px; border: 1px solid #88743770;
+  border-radius: 12px; background: #322b1b55; color: #e6d5a2;
+  font-size: 12px; line-height: 1.8; margin-bottom: 19px;
+}
+.learn-detail {
+  display: grid; grid-template-columns: .7fr 1.3fr;
+  gap: 20px; margin-top: 20px;
+}
+.learn-big {
+  min-height: 190px; border-radius: 16px;
+  background: linear-gradient(135deg, #2256a2, #12667a);
+  display: grid; place-items: center; text-align: center;
+}
+.learn-big span { font-size: 82px; font-weight: 800; }
+.learn-info h3 { margin: 5px 0 12px; font-size: 21px; }
+.learn-info p { color: var(--muted); font-size: 13px; line-height: 1.8; }
+.chip {
+  display: inline-block; padding: 6px 9px; border-radius: 7px;
+  background: #1c3659; color: #a9d5ff; font-size: 11px;
+}
+.space-card { margin-top: 17px; }
+.space-demo {
+  display: flex; align-items: center; gap: 17px; flex-wrap: wrap;
+}
+.space-demo .letter-symbol { width: 55px; height: 55px; font-size: 25px; margin: 0; }
+
+.steps-grid, .tech-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+}
+.step-card, .tech-card {
+  background: #112441; border: 1px solid var(--border);
+  padding: 20px; border-radius: 17px;
+}
+.step-number {
+  width: 38px; height: 38px; border-radius: 12px;
+  display: grid; place-items: center; background: #234d86;
+  color: #8cdcff; font-weight: 800; margin-bottom: 17px;
+}
+.step-card h3, .tech-card h3 { font-size: 14px; margin: 0 0 10px; }
+.step-card p, .tech-card p { font-size: 12px; color: var(--muted); line-height: 1.8; margin: 0; }
+.tech-grid { grid-template-columns: repeat(4, 1fr); }
+.tech-icon { font-size: 26px; margin-bottom: 14px; }
+.about-box { margin-top: 20px; }
+.about-box h3 { margin-top: 0; }
+.about-box p, .about-box li { color: var(--muted); font-size: 13px; line-height: 1.9; }
+footer {
+  border-top: 1px solid var(--border); margin-top: 48px;
+  padding: 23px 0; color: var(--muted); font-size: 11px;
+}
+.footer-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.hidden { display: none !important; }
+
+@media (max-width: 850px) {
+  .hero { grid-template-columns: 1fr; padding-top: 34px; }
+  .hero-note { max-width: 500px; }
+  .camera-layout { grid-template-columns: 1fr; }
+  .alphabet-grid { grid-template-columns: repeat(4, minmax(0,1fr)); }
+  .steps-grid, .tech-grid { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 500px) {
+  .container { width: 94%; }
+  header { padding-top: 17px; }
+  .brand h1 { font-size: 23px; }
+  .brand p { font-size: 10px; }
+  .brand-icon { width: 45px; height: 45px; }
+  .hero h2 { letter-spacing: -1px; }
+  .hero { gap: 22px; }
+  .card { padding: 14px; }
+  .alphabet-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+  .letter-card { padding: 10px; }
+  .letter-card small { font-size: 9px; }
+  .guide { grid-template-columns: 1fr; }
+  .learn-detail { grid-template-columns: 1fr; }
+  .steps-grid, .tech-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .step-card, .tech-card { padding: 13px; }
+  .result-letter { font-size: 76px; }
+  .camera-bottom { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="container header-row">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">🤟</div>
+      <div>
+        <h1>संकेतवाणी</h1>
+        <p>Sign Language Detection &amp; Learning Platform</p>
+      </div>
+    </div>
+    <div class="status-pill" role="status" aria-live="polite">
+      <span id="statusDot" class="dot"></span>
+      <span id="cameraStatus">कैमरा बंद है</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <div>
+      <span class="eyebrow">✦ LEARN · PRACTICE · COMMUNICATE</span>
+      <h2>हाथों की भाषा,<br><span class="gradient-text">अब हर किसी के लिए</span></h2>
+      <p>
+        संकेतवाणी के साथ हाथों के संकेतों को समझने और सीखने की शुरुआत करें।
+        कैमरे से अपने हाथ की पोज़िशन देखें, लैंडमार्क समझें और अक्षरों का अभ्यास करें।
+      </p>
+    </div>
+    <div class="hero-note">
+      <div class="big" aria-hidden="true">✋</div>
+      <h3>सीखना हुआ आसान</h3>
+      <p>इंटरैक्टिव अक्षर चार्ट, लाइव कैमरा ट्रैकिंग और शुरुआती विद्यार्थियों के लिए सरल मार्गदर्शन।</p>
+    </div>
+  </section>
+
+  <nav class="tabs" aria-label="मुख्य नेविगेशन">
+    <button class="tab active" data-tab="live" aria-selected="true">◉ Live Detection</button>
+    <button class="tab" data-tab="learn" aria-selected="false">✋ Learn Alphabet</button>
+    <button class="tab" data-tab="about" aria-selected="false">ⓘ About</button>
+  </nav>
+
+  <!-- TAB 1: LIVE DETECTION -->
+  <section id="live" class="page active">
+    <div class="section-heading">
+      <div>
+        <h2>लाइव हैंड-साइन डिटेक्शन</h2>
+        <p>कैमरा शुरू करें और अपना हाथ कैमरे के सामने दिखाएँ।</p>
+      </div>
+      <span class="chip">MediaPipe Hands</span>
+    </div>
+
+    <div class="camera-layout">
+      <div class="card">
+        <div class="camera-box" id="cameraBox">
+          <video id="video" autoplay muted playsinline aria-label="लाइव कैमरा वीडियो"></video>
+          <canvas id="overlay" aria-label="हाथ के लैंडमार्क का ओवरले"></canvas>
+          <div id="placeholder" class="camera-placeholder">
+            <div class="cam-icon">📷</div>
+            <strong>आपका कैमरा यहाँ दिखाई देगा</strong>
+            <span>शुरू करने के लिए Start Camera दबाएँ। अनुमति केवल बटन दबाने पर माँगी जाएगी।</span>
+          </div>
+          <div class="camera-badge">
+            <span id="previewDot" class="dot"></span>
+            <span id="previewLabel">CAMERA OFF</span>
+          </div>
+        </div>
+
+        <div class="camera-bottom">
+          <div class="small-muted">बेहतर परिणाम के लिए पूरा हाथ और उँगलियाँ दिखाएँ।</div>
+          <div class="actions">
+            <button id="startBtn" class="btn primary">▶ Start Camera</button>
+            <button id="stopBtn" class="btn stop" disabled>■ Stop Camera</button>
+            <button id="resetBtn" class="btn yellow">↺ Reset</button>
+          </div>
+        </div>
+        <div id="message" class="message" role="status" aria-live="polite">
+          तैयार हैं। कैमरा शुरू करने के लिए Start Camera दबाएँ।
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="result-card">
+          <div class="result-label">CURRENT PREDICTION</div>
+          <div id="resultLetter" class="result-letter">—</div>
+          <div id="resultName" class="result-name">अभी कोई संकेत नहीं</div>
+          <div id="confidenceNote" class="result-sub">
+            कैमरा शुरू करने के बाद हाथ की पोज़िशन का विश्लेषण होगा।
+          </div>
+        </div>
+
+        <div class="word-box">
+          <label for="wordOutput">SIGN WORD BUILDER</label>
+          <div id="wordOutput" class="word-output" aria-live="polite"> </div>
+          <div class="actions" style="margin-top:13px">
+            <button id="addBtn" class="btn primary" disabled>+ अक्षर जोड़ें</button>
+            <button id="spaceBtn" class="btn" disabled>Space</button>
+            <button id="undoBtn" class="btn" disabled>Undo</button>
+            <button id="clearWordBtn" class="btn">Clear Word</button>
+          </div>
+          <p class="small-muted">
+            अक्षर जोड़ने के लिए भविष्यवाणी स्थिर होने दें। यह शब्द बनाने वाला अभ्यास टूल है।
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide">
+      <div class="guide-item">
+        <b>01 · कैमरा</b>
+        <span>हाथ कैमरे में साफ और पर्याप्त रोशनी में रखें।</span>
+      </div>
+      <div class="guide-item">
+        <b>02 · लैंडमार्क</b>
+        <span>हरे बिंदु और रेखाएँ हाथ के 21 लैंडमार्क दिखाते हैं।</span>
+      </div>
+      <div class="guide-item">
+        <b>03 · पहचान</b>
+        <span>अस्पष्ट या समर्थित नहीं होने वाली पोज़िशन को Unknown बताया जाएगा।</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: ALPHABET -->
+  <section id="learn" class="page">
+    <div class="section-heading">
+      <div>
+        <h2>ASL Alphabet Learning</h2>
+        <p>A से Z तक अक्षर चुनें और उनकी पोज़िशन के बारे में पढ़ें।</p>
+      </div>
+      <span class="chip">26 Letters + Space</span>
+    </div>
+
+    <div class="chart-note">
+      <strong>सीखने के लिए जरूरी सूचना:</strong>
+      यह टेक्स्ट-आधारित शुरुआती संदर्भ चार्ट है, प्रमाणित हाथ के संकेतों की फोटो-गैलरी नहीं।
+      नीचे दिए गए निर्देश सामान्य ASL fingerspelling विवरण हैं। कुछ अक्षर, खासकर
+      M, N, T, R, U और V, एक-दूसरे से मिलते-जुलते हैं; सही अभ्यास के लिए
+      किसी योग्य ASL शिक्षक या विश्वसनीय दृश्य संदर्भ का उपयोग करें।
+    </div>
+
+    <div id="alphabetGrid" class="alphabet-grid" aria-label="A से Z तक अक्षर"></div>
+
+    <div class="learn-detail card" aria-live="polite">
+      <div class="learn-big"><span id="learnBigLetter">A</span></div>
+      <div class="learn-info">
+        <span class="chip" id="learnChip">LETTER A</span>
+        <h3 id="learnTitle">A — Fist with thumb at the side</h3>
+        <p id="learnDescription">
+          चारों उँगलियों को मोड़कर मुट्ठी बनाएँ और अंगूठे को उँगलियों के किनारे रखें।
+        </p>
+        <p><strong>अभ्यास सुझाव:</strong> हाथ को आराम से रखें, संकेत को धीरे बनाएँ और सही दृश्य संदर्भ से तुलना करें।</p>
+      </div>
+    </div>
+
+    <div class="card space-card">
+      <div class="space-demo">
+        <div class="letter-symbol">↔</div>
+        <div style="flex:1">
+          <h3 style="margin:0 0 7px">Space — शब्दों के बीच अंतर</h3>
+          <p class="small-muted">
+            ASL fingerspelling में शब्दों के बीच अंतर आम तौर पर रुककर बनाया जाता है;
+            कोई एक सार्वभौमिक स्थिर हाथ-पोज़िशन “Space” नहीं है।
+            इस ऐप में Space बटन शब्द बनाने के लिए दिया गया है।
+          </p>
+        </div>
+        <button id="learnSpaceBtn" class="btn primary">शब्द में Space जोड़ें</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: ABOUT -->
+  <section id="about" class="page">
+    <div class="section-heading">
+      <div>
+        <h2>How It Works</h2>
+        <p>संकेतवाणी के पीछे काम करने वाली प्रक्रिया को समझें।</p>
+      </div>
+    </div>
+
+    <div class="steps-grid">
+      <article class="step-card">
+        <div class="step-number">01</div>
+        <h3>कैमरा वीडियो लेता है</h3>
+        <p>आपकी अनुमति के बाद ब्राउज़र कैमरे से वीडियो फ्रेम प्राप्त करता है।</p>
+      </article>
+      <article class="step-card">
+        <div class="step-number">02</div>
+        <h3>लैंडमार्क पहचान</h3>
+        <p>MediaPipe Hands हाथ के 21 मुख्य बिंदुओं के निर्देशांक निकालता है।</p>
+      </article>
+      <article class="step-card">
+        <div class="step-number">03</div>
+        <h3>पोज़िशन का वर्गीकरण</h3>
+        <p>JavaScript उँगलियों की स्थिति और उपलब्ध गति-सूचना पर नियम लागू करती है।</p>
+      </article>
+      <article class="step-card">
+        <div class="step-number">04</div>
+        <h3>परिणाम स्क्रीन पर</h3>
+        <p>स्थिर अनुमान दिखता है। अनिश्चित पोज़िशन को गलत अक्षर देने के बजाय Unknown रखा जाता है।</p>
+      </article>
+    </div>
+
+    <div class="section-heading" style="margin-top:34px">
+      <div>
+        <h2>Technology Stack</h2>
+        <p>इस प्रोजेक्ट को चलाने के लिए अलग बैकएंड या बिल्ड टूल की जरूरत नहीं।</p>
+      </div>
+    </div>
+
+    <div class="tech-grid">
+      <article class="tech-card">
+        <div class="tech-icon">🌐</div>
+        <h3>HTML5</h3>
+        <p>वेबसाइट की संरचना, वीडियो और कंट्रोल।</p>
+      </article>
+      <article class="tech-card">
+        <div class="tech-icon">🎨</div>
+        <h3>CSS3</h3>
+        <p>रेस्पॉन्सिव डिज़ाइन, कार्ड और एनिमेशन।</p>
+      </article>
+      <article class="tech-card">
+        <div class="tech-icon">⚡</div>
+        <h3>JavaScript</h3>
+        <p>कैमरा नियंत्रण, नियम-आधारित अनुमान और इंटरैक्शन।</p>
+      </article>
+      <article class="tech-card">
+        <div class="tech-icon">🖐️</div>
+        <h3>MediaPipe Hands</h3>
+        <p>हाथ की ट्रैकिंग और 21 लैंडमार्क निकालना।</p>
+      </article>
+    </div>
+
+    <div class="card about-box">
+      <h3>संकेतवाणी का उद्देश्य</h3>
+      <p>
+        संकेतवाणी एक शुरुआती शैक्षिक प्रोजेक्ट है। इसका उद्देश्य विद्यार्थियों को
+        कंप्यूटर विज़न, हाथ के लैंडमार्क और सांकेतिक भाषा की बुनियादी अवधारणाएँ
+        सरल तरीके से सिखाना है।
+      </p>
+      <p>
+        <strong>सीमा:</strong> हाथ का पता लग जाना किसी अक्षर की सही पहचान का प्रमाण नहीं है।
+        यह डेमो पूर्ण ASL अनुवादक नहीं है, और सभी अक्षरों का विश्वसनीय वर्गीकरण नहीं करता।
+        इसे चिकित्सा, परीक्षा या महत्वपूर्ण संचार के लिए अकेले इस्तेमाल न करें।
+      </p>
+      <p>
+        <strong>गोपनीयता:</strong> यह पेज किसी सर्वर पर वीडियो भेजने के लिए अपना कोड नहीं रखता।
+        वीडियो ब्राउज़र में MediaPipe को दिया जाता है। CDN और फ़ॉन्ट लोड करने के लिए इंटरनेट
+        कनेक्शन चाहिए; CDN लाइब्रेरी की अपनी तकनीकी आवश्यकताएँ लागू होती हैं।
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container footer-row">
+    <span>© 2026 संकेतवाणी · Sign Language Detection &amp; Learning</span>
+    <span>Learn with respect. Communicate with inclusion. 💙</span>
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* -------------------------------------------------------
+   1. छोटे DOM हेल्पर और टैब नियंत्रण
+------------------------------------------------------- */
+const $ = (id) => document.getElementById(id);
+
+document.querySelectorAll(".tab").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(tab => {
+      const active = tab === button;
+      tab.classList.toggle("active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+
+    document.querySelectorAll(".page").forEach(page => {
+      page.classList.toggle("active", page.id === button.dataset.tab);
+    });
+  });
+});
+
+const video = $("video");
+const canvas = $("overlay");
+const ctx = canvas.getContext("2d");
+const startBtn = $("startBtn");
+const stopBtn = $("stopBtn");
+const resetBtn = $("resetBtn");
+const message = $("message");
+
+let stream = null;
+let hands = null;
+let running = false;
+let busy = false;
+let rafId = null;
+let lastFrameTime = 0;
+let lastProcessTime = 0;
+let stableCandidate = "";
+let stableCount = 0;
+let currentPrediction = "";
+let stablePrediction = "";
+let currentLandmarks = null;
+let handMissingFrames = 0;
+let lastError = "";
+let lastHandTime = 0;
+let motionHistory = [];
+let lastJZLetter = "";
+let lastJZTime = 0;
+let gestureTransition = "";
+let transitionTime = 0;
+let libraryFailed = false;
+let startInProgress = false;
+let word = "";
+let lastAddedLetter = "";
+let lastAddedTime = 0;
+const STABILITY_FRAMES = 5;
+const MIN_PROCESS_INTERVAL = 60;
+
+/* -------------------------------------------------------
+   2. UI संदेश और कैमरा स्थिति
+------------------------------------------------------- */
+function setMessage(text, type = "") {
+  message.textContent = text;
+  message.className = "message" + (type ? " " + type : "");
+}
+function setCameraStatus(text, state = "") {
+  $("cameraStatus").textContent = text;
+  $("statusDot").className = "dot" + (state ? " " + state : "");
+  $("previewDot").className = "dot" + (state ? " " + state : "");
+  $("previewLabel").textContent =
+    state === "live" ? "CAMERA LIVE" :
+    state === "error" ? "CAMERA ERROR" : "CAMERA OFF";
+}
+function setPrediction(letter, detail = "") {
+  $("resultLetter").textContent = letter || "—";
+  $("resultName").textContent = letter
+    ? (letter === "Unknown" ? "Unknown Gesture" :
+       letter === "SPACE" ? "Space / शब्द अंतर" : "ASL Letter " + letter)
+    : "अभी कोई संकेत नहीं";
+  $("confidenceNote").textContent = detail ||
+    "यह नियम-आधारित अनुमान है, AI द्वारा प्रमाणित अक्षर नहीं।";
+}
+function resetPrediction() {
+  stableCandidate = "";
+  stableCount = 0;
+  currentPrediction = "";
+  stablePrediction = "";
+  currentLandmarks = null;
+  handMissingFrames = 0;
+  motionHistory = [];
+  lastJZLetter = "";
+  lastJZTime = 0;
+  gestureTransition = "";
+  transitionTime = 0;
+  lastAddedLetter = "";
+  setPrediction("", "कैमरा शुरू करने के बाद हाथ की पोज़िशन का विश्लेषण होगा।");
+  drawEmptyCanvas();
+}
+function drawEmptyCanvas() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+function resizeCanvas() {
+  const width = video.videoWidth || 640;
+  const height = video.videoHeight || 480;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+}
+
+/* -------------------------------------------------------
+   3. ASL अक्षरों का टेक्स्ट-आधारित शुरुआती संदर्भ
+   यह हाथ की तस्वीर नहीं है।
+------------------------------------------------------- */
+const alphabet = {
+ A: "चार उँगलियाँ मोड़ें; अंगूठा मुट्ठी के किनारे पर।",
+ B: "चारों उँगलियाँ सीधी और पास; अंगूठा हथेली पर मुड़ा।",
+ C: "हाथ को C आकार में गोल मोड़ें।",
+ D: "तर्जनी ऊपर; बाकी उँगलियाँ अंगूठे से मिलकर गोल आकार बनाएँ।",
+ E: "उँगलियाँ हथेली की ओर मुड़ी हों; अंगूठा सामने की ओर।",
+ F: "अंगूठा और तर्जनी मिलाएँ; बाकी तीन उँगलियाँ ऊपर।",
+ G: "अंगूठा और तर्जनी क्षैतिज दिशा में; बाकी उँगलियाँ मुड़ी।",
+ H: "तर्जनी और मध्यमा साथ में क्षैतिज दिशा में।",
+ I: "मुट्ठी में केवल छोटी उँगली ऊपर।",
+ J: "I की पोज़िशन से छोटी उँगली J की गति बनाए।",
+ K: "तर्जनी और मध्यमा ऊपर अलग; अंगूठा मध्यमा के पास।",
+ L: "अंगूठा और तर्जनी L आकार में।",
+ M: "अंगूठा मुड़ी उँगलियों के नीचे, सामान्यतः तीन उँगलियों के नीचे।",
+ N: "अंगूठा मुड़ी उँगलियों के नीचे, सामान्यतः दो उँगलियों के नीचे।",
+ O: "उँगलियाँ और अंगूठा गोल O आकार बनाएँ।",
+ P: "K जैसी उँगलियों की व्यवस्था, हाथ नीचे की ओर।",
+ Q: "G जैसी व्यवस्था, हाथ नीचे की ओर।",
+ R: "मध्यमा और तर्जनी क्रॉस हों।",
+ S: "मुट्ठी; अंगूठा उँगलियों के सामने।",
+ T: "अंगूठा तर्जनी और मध्यमा के बीच।",
+ U: "तर्जनी और मध्यमा साथ-साथ ऊपर।",
+ V: "तर्जनी और मध्यमा V आकार में अलग।",
+ W: "तर्जनी, मध्यमा और अनामिका ऊपर।",
+ X: "तर्जनी मुड़ी हुई, बाकी उँगलियाँ मुड़ी हुई।",
+ Y: "अंगूठा और छोटी उँगली बाहर; बाकी उँगलियाँ मुड़ी।",
+ Z: "तर्जनी हवा में Z की गति बनाए।"
+};
+
+const grid = $("alphabetGrid");
+let selectedLetter = "A";
+
+Object.keys(alphabet).forEach(letter => {
+  const button = document.createElement("button");
+  button.className = "letter-card" + (letter === "A" ? " selected" : "");
+  button.type = "button";
+  button.setAttribute("aria-label", "अक्षर " + letter + " का विवरण देखें");
+  button.innerHTML =
+    '<span class="letter-symbol">' + letter + '</span>' +
+    '<strong>Letter ' + letter + '</strong>' +
+    '<small>' + alphabet[letter] + '</small>';
+
+  button.addEventListener("click", () => selectLetter(letter, button));
+  grid.appendChild(button);
+});
+
+function selectLetter(letter, button) {
+  selectedLetter = letter;
+  document.querySelectorAll(".letter-card").forEach(card => {
+    card.classList.toggle("selected", card === button);
+  });
+  $("learnBigLetter").textContent = letter;
+  $("learnChip").textContent = "LETTER " + letter;
+  $("learnTitle").textContent = letter + " — " + alphabet[letter];
+  $("learnDescription").textContent = alphabet[letter];
+}
+
+/* -------------------------------------------------------
+   4. शब्द बनाने वाले कंट्रोल
+------------------------------------------------------- */
+function updateWordUI() {
+  $("wordOutput").textContent = word || " ";
+  $("undoBtn").disabled = word.length === 0;
+}
+function addToWord(letter) {
+  if (!letter) return;
+  if (letter === "SPACE") {
+    if (word.length && !word.endsWith(" ")) word += " ";
+  } else if (/^[A-Z]$/.test(letter)) {
+    word += letter;
+  } else {
+    return;
+  }
+  updateWordUI();
+}
+$("addBtn").addEventListener("click", () => {
+  if (stablePrediction && /^[A-Z]$/.test(stablePrediction)) {
+    addToWord(stablePrediction);
+  }
+});
+$("spaceBtn").addEventListener("click", () => addToWord("SPACE"));
+$("learnSpaceBtn").addEventListener("click", () => {
+  addToWord("SPACE");
+  document.querySelector('[data-tab="live"]').click();
+});
+$("undoBtn").addEventListener("click", () => {
+  word = word.slice(0, -1);
+  updateWordUI();
+});
+$("clearWordBtn").addEventListener("click", () => {
+  word = "";
+  updateWordUI();
+});
+
+/* -------------------------------------------------------
+   5. उँगलियों की स्थिति निकालना
+   MediaPipe में प्रत्येक हाथ के 21 landmarks होते हैं।
+   हर बिंदु में x, y, z निर्देशांक मिलते हैं।
+------------------------------------------------------- */
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+function fingerStates(lm) {
+  // अंगूठा और चार उँगलियों की सामान्य extension जाँच।
+  // यह हाथ के कोण और अलग-अलग हाथों से प्रभावित हो सकता है।
+  const index = lm[8].y < lm[6].y;
+  const middle = lm[12].y < lm[10].y;
+  const ring = lm[16].y < lm[14].y;
+  const pinky = lm[20].y < lm[18].y;
+
+  // अंगूठे के लिए x दूरी: कैमरा मिरर होने से दिशा उलट सकती है।
+  // दूरी का उपयोग दिशा के बजाय हथेली के अनुपात में किया जाता है।
+  const palmWidth = Math.max(distance(lm[5], lm[17]), 0.001);
+  const thumbExtended =
+    distance(lm[4], lm[5]) > palmWidth * 0.55 &&
+    distance(lm[4], lm[2]) > distance(lm[3], lm[2]) * 1.15;
+
+  return {
+    thumb: thumbExtended,
+    index, middle, ring, pinky,
+    count: [index, middle, ring, pinky].filter(Boolean).length
+  };
+}
+
+/* -------------------------------------------------------
+   6. नियम-आधारित शुरुआती gesture classifier
+
+   ध्यान दें:
+   - यह प्रशिक्षित ASL मॉडल नहीं है।
+   - केवल कुछ स्पष्ट उँगली-पैटर्न के लिए अनुमान लगाया जाता है।
+   - अस्पष्ट पैटर्न पर Unknown लौटाया जाता है।
+------------------------------------------------------- */
+function classifyGesture(lm) {
+  const f = fingerStates(lm);
+
+  // उँगली की नोक से हथेली के आधार तक दूरी का अनुपात।
+  // हथेली के आकार से सामान्यीकृत करने से कुछ स्थिरता मिलती है।
+  const palm = Math.max(distance(lm[0], lm[9]), 0.001);
+  const indexStraight = distance(lm[8], lm[5]) > palm * 1.25;
+  const middleStraight = distance(lm[12], lm[9]) > palm * 1.25;
+  const ringStraight = distance(lm[16], lm[13]) > palm * 1.1;
+  const pinkyStraight = distance(lm[20], lm[17]) > palm * 0.95;
+
+  // मुट्ठी और खुली हथेली की स्थिति: केवल तभी अनुमान,
+  // जब चारों उँगलियों की स्थिति स्पष्ट हो।
+  const allFolded = f.count === 0;
+  const allOpen = f.count === 4;
+
+  // L: अंगूठा बाहर और तर्जनी ऊपर।
+  if (f.thumb && f.index && !f.middle && !f.ring && !f.pinky &&
+      indexStraight) return "L";
+
+  // V: तर्जनी और मध्यमा अलग-अलग सीधी।
+  if (!f.thumb && f.index && f.middle && !f.ring && !f.pinky &&
+      indexStraight && middleStraight &&
+      distance(lm[8], lm[12]) > palm * 0.32) return "V";
+
+  // U: तर्जनी और मध्यमा सीधी लेकिन एक-दूसरे के पास।
+  if (!f.thumb && f.index && f.middle && !f.ring && !f.pinky &&
+      indexStraight && middleStraight &&
+      distance(lm[8], lm[12]) <= palm * 0.32) return "U";
+
+  // W: तीन मध्य उँगलियाँ खुली, छोटी उँगली मुड़ी।
+  if (f.index && f.middle && f.ring && !f.pinky &&
+      indexStraight && middleStraight && ringStraight) return "W";
+
+  // I: केवल छोटी उँगली खुली।
+  if (!f.index && !f.middle && !f.ring && f.pinky &&
+      pinkyStraight) return "I";
+
+  // Y: अंगूठा और छोटी उँगली बाहर।
+  if (f.thumb && !f.index && !f.middle && !f.ring &&
+      f.pinky && pinkyStraight) return "Y";
+
+  // B: चार उँगलियाँ खुली और अंगूठा हथेली के पास।
+  if (!f.thumb && allOpen && indexStraight && middleStraight &&
+      ringStraight && pinkyStraight) return "B";
+
+  // A: मुट्ठी और अंगूठा बाहर की तरफ।
+  // अंगूठे की दिशा की पुष्टि न होने पर Unknown रखा जाएगा।
+  if (allFolded && f.thumb &&
+      distance(lm[4], lm[5]) > palm * 0.45) return "A";
+
+  // D: केवल तर्जनी खुली, अंगूठा मध्यमा की नोक के पास।
+  if (f.index && !f.middle && !f.ring && !f.pinky &&
+      indexStraight &&
+      distance(lm[4], lm[12]) < palm * 0.75) return "D";
+
+  // शेष अक्षर इस सरल classifier में विश्वसनीय रूप से अलग नहीं किए जा सकते।
+  return "Unknown";
+}
+
+/* -------------------------------------------------------
+   7. J/Z के लिए गति का रिकॉर्ड
+   J और Z गति पर आधारित संकेत हैं। यह डेमो केवल गति का
+   अनुमान रखता है; इसे सही J/Z पहचान का दावा न समझें।
+------------------------------------------------------- */
+function updateMotion(lm, raw) {
+  const now = performance.now();
+  const point = lm[8]; // तर्जनी की नोक
+  motionHistory.push({ x: point.x, y: point.y, t: now, raw });
+
+  // पिछले लगभग 900 मिलीसेकंड की गति रखें।
+  motionHistory = motionHistory.filter(p => now - p.t < 900);
+
+  // जटिल पथ को विश्वसनीय रूप से पहचानने के लिए पर्याप्त डेटा चाहिए।
+  // यदि पथ छोटा, अस्पष्ट या स्थिर हो, तो कोई अनुमान न दें।
+  if (motionHistory.length < 8) return raw;
+
+  const first = motionHistory[0];
+  const last = motionHistory[motionHistory.length - 1];
+  const xs = motionHistory.map(p => p.x);
+  const ys = motionHistory.map(p => p.y);
+  const rangeX = Math.max(...xs) - Math.min(...xs);
+  const rangeY = Math.max(...ys) - Math.min(...ys);
+  const travel = motionHistory.reduce((sum, p, i, arr) => {
+    if (i === 0) return sum;
+    return sum + Math.hypot(p.x - arr[i - 1].x, p.y - arr[i - 1].y);
+  }, 0);
+
+  // सिर्फ हाथ हिलने से J या Z तय नहीं किया जा सकता।
+  // यदि सरल, पहचाने जाने योग्य पथ का पर्याप्त प्रमाण नहीं है,
+  // तो मूल अनुमान ही रखें।
+  if (travel < 0.18 || Math.hypot(last.x - first.x, last.y - first.y) < 0.035) {
+    return raw;
+  }
+
+  // जानबूझकर अस्पष्ट पथों पर J/Z का लेबल नहीं दिया जाता।
+  // सटीक J/Z के लिए प्रशिक्षित temporal classifier आवश्यक है।
+  return raw;
+}
+
+/* -------------------------------------------------------
+   8. स्थिरता जाँच
+   लगातार समान अनुमान आने पर ही उसे स्थिर दिखाएँ।
+------------------------------------------------------- */
+function updateStablePrediction(raw) {
+  if (raw === stableCandidate) {
+    stableCount++;
+  } else {
+    stableCandidate = raw;
+    stableCount = 1;
+  }
+
+  currentPrediction = raw;
+
+  if (stableCount >= STABILITY_FRAMES) {
+    stablePrediction = raw;
+    if (raw === "Unknown") {
+      setPrediction("Unknown",
+        "हाथ मिल गया है, लेकिन यह पोज़िशन इस डेमो में विश्वसनीय रूप से वर्गीकृत नहीं है।");
+    } else {
+      setPrediction(raw,
+        "स्थिर नियम-आधारित अनुमान। यह प्रमाणित ASL पहचान या confidence score नहीं है।");
+    }
+    $("addBtn").disabled = !/^[A-Z]$/.test(raw);
+    $("spaceBtn").disabled = false;
+  } else {
+    setPrediction("…", "पोज़िशन की स्थिरता जाँची जा रही है…");
+    $("addBtn").disabled = true;
+    $("spaceBtn").disabled = false;
+  }
+}
+
+/* -------------------------------------------------------
+   9. हाथ के लैंडमार्क और जोड़ने वाली रेखाएँ बनाना
+------------------------------------------------------- */
+const connections = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],[0,17]
+];
+
+function drawLandmarks(landmarks) {
+  resizeCanvas();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!landmarks) return;
+
+  ctx.lineWidth = Math.max(2, canvas.width / 300);
+  ctx.strokeStyle = "#42d9ef";
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  connections.forEach(([a, b]) => {
+    const p1 = landmarks[a];
+    const p2 = landmarks[b];
+    ctx.beginPath();
+    ctx.moveTo(p1.x * canvas.width, p1.y * canvas.height);
+    ctx.lineTo(p2.x * canvas.width, p2.y * canvas.height);
+    ctx.stroke();
+  });
+
+  landmarks.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(
+      p.x * canvas.width, p.y * canvas.height,
+      i % 4 === 0 ? 4 : 2.5, 0, Math.PI * 2
+    );
+    ctx.fillStyle = i % 4 === 0 ? "#ffd45e" : "#67ffbf";
+    ctx.fill();
+  });
+}
+
+/* -------------------------------------------------------
+   10. MediaPipe के परिणाम
+------------------------------------------------------- */
+function onResults(results) {
+  if (!running) return;
+  resizeCanvas();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const list = results.multiHandLandmarks || [];
+  if (list.length === 0) {
+    handMissingFrames++;
+    currentLandmarks = null;
+    motionHistory = [];
+    stableCandidate = "";
+    stableCount = 0;
+    stablePrediction = "";
+    $("addBtn").disabled = true;
+    $("spaceBtn").disabled = false;
+    setPrediction("—", "हाथ नहीं दिख रहा। अपना हाथ कैमरे के सामने रखें।");
+    return;
+  }
+
+  handMissingFrames = 0;
+  lastHandTime = performance.now();
+
+  // पहला हाथ इस शुरुआती डेमो में इस्तेमाल होता है।
+  const lm = list[0];
+  currentLandmarks = lm;
+  drawLandmarks(lm);
+
+  let raw = classifyGesture(lm);
+  raw = updateMotion(lm, raw);
+  updateStablePrediction(raw);
+}
+
+/* -------------------------------------------------------
+   11. कैमरा शुरू करना
+   अनुमति केवल Start Camera पर क्लिक करने के बाद माँगी जाती है।
+------------------------------------------------------- */
+async function startCamera() {
+  if (startInProgress || running) return;
+  startInProgress = true;
+  startBtn.disabled = true;
+  setMessage("कैमरा और MediaPipe लोड हो रहे हैं…", "loading");
+  setCameraStatus("कैमरा शुरू हो रहा है");
+
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("NO_CAMERA_API");
+    }
+    if (typeof window.Hands !== "function") {
+      libraryFailed = true;
+      throw new Error("LIBRARY");
+    }
+
+    // पहले कैमरे की अनुमति माँगें।
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: "user",
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      }
+    });
+
+    video.srcObject = stream;
+    await new Promise((resolve, reject) => {
+      if (video.readyState >= 1) return resolve();
+      video.onloadedmetadata = resolve;
+      video.onerror = () => reject(new Error("VIDEO"));
+    });
+    await video.play();
+
+    if (!hands) {
+      hands = new window.Hands({
+        locateFile: file =>
+          "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" + file
+      });
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.6
+      });
+      hands.onResults(onResults);
+    }
+
+    running = true;
+    busy = false;
+    lastFrameTime = 0;
+    lastProcessTime = 0;
+    $("placeholder").classList.add("hidden");
+    video.style.display = "block";
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    setCameraStatus("कैमरा चालू", "live");
+    setMessage("कैमरा चालू है। हाथ को फ्रेम के बीच में रखें।", "success");
+    resetPrediction();
+    rafId = requestAnimationFrame(processFrame);
+
+  } catch (error) {
+    running = false;
+    busy = false;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    video.style.display = "none";
+    $("placeholder").classList.remove("hidden");
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    setCameraStatus("कैमरा उपलब्ध नहीं", "error");
+
+    let text = "कैमरा शुरू नहीं हो पाया।";
+    if (error.message === "NO_CAMERA_API") {
+      text = "यह ब्राउज़र कैमरा API उपलब्ध नहीं कराता। localhost या HTTPS पर आधुनिक ब्राउज़र में खोलें।";
+    } else if (error.message === "LIBRARY" || libraryFailed) {
+      text = "MediaPipe लाइब्रेरी लोड नहीं हुई। इंटरनेट कनेक्शन जाँचें और पेज दोबारा खोलें।";
+    } else if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      text = "कैमरे की अनुमति नहीं मिली। ब्राउज़र की साइट सेटिंग में Camera अनुमति दें।";
+    } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      text = "कोई कैमरा नहीं मिला। कैमरा कनेक्ट करके दोबारा प्रयास करें।";
+    } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+      text = "कैमरा किसी दूसरे ऐप में इस्तेमाल हो रहा हो सकता है। दूसरे ऐप बंद करें।";
+    } else if (error.name === "OverconstrainedError") {
+      text = "कैमरे की माँगी गई सेटिंग उपलब्ध नहीं है। दूसरे कैमरे से प्रयास करें।";
+    } else if (error.message === "VIDEO") {
+      text = "कैमरे से वीडियो प्राप्त नहीं हुआ। कैमरे और ब्राउज़र की जाँच करें।";
+    } else {
+      text = "त्रुटि: " + (error.message || "अज्ञात समस्या") +
+        "। इंटरनेट, कैमरा और ब्राउज़र अनुमतियाँ जाँचें।";
+    }
+    setMessage(text, "error");
+    setPrediction("—", "कैमरा चालू होने के बाद ही पहचान संभव है।");
+    console.error("SanketVani camera error:", error);
+  } finally {
+    startInProgress = false;
+    if (!running) startBtn.disabled = false;
+  }
+}
+
+/* -------------------------------------------------------
+   12. वीडियो फ्रेम MediaPipe को भेजना
+   एक समय पर केवल एक inference चलाते हैं।
+------------------------------------------------------- */
+async function processFrame(timestamp) {
+  if (!running) return;
+  rafId = requestAnimationFrame(processFrame);
+
+  if (busy || video.readyState < 2) return;
+  if (timestamp - lastProcessTime < MIN_PROCESS_INTERVAL) return;
+  lastProcessTime = timestamp;
+
+  busy = true;
+  try {
+    await hands.send({ image: video });
+  } catch (error) {
+    console.error("MediaPipe frame error:", error);
+    setMessage("फ्रेम प्रोसेस नहीं हुआ। कैमरा और नेटवर्क की स्थिति जाँचें।", "error");
+  } finally {
+    busy = false;
+  }
+}
+
+/* -------------------------------------------------------
+   13. कैमरा वास्तव में बंद करना
+------------------------------------------------------- */
+function stopCamera() {
+  running = false;
+  busy = false;
+
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+  video.pause();
+  video.srcObject = null;
+  video.style.display = "none";
+  $("placeholder").classList.remove("hidden");
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  setCameraStatus("कैमरा बंद है");
+  setMessage("कैमरा बंद कर दिया गया है। वीडियो स्ट्रीम रोक दी गई है।");
+  resetPrediction();
+}
+
+startBtn.addEventListener("click", startCamera);
+stopBtn.addEventListener("click", stopCamera);
+
+resetBtn.addEventListener("click", () => {
+  resetPrediction();
+  setMessage(
+    running
+      ? "पहचान का परिणाम रीसेट किया गया। हाथ फिर से कैमरे में दिखाएँ।"
+      : "रीसेट पूरा हुआ। Start Camera दबाकर शुरुआत करें।"
+  );
+});
+
+/* पेज छोड़ते समय कैमरा ट्रैक रोकने का प्रयास */
+window.addEventListener("pagehide", () => {
+  running = false;
+  if (rafId !== null) cancelAnimationFrame(rafId);
+  if (stream) stream.getTracks().forEach(track => track.stop());
+});
+
+/* शुरुआती UI */
+updateWordUI();
+setPrediction("", "कैमरा शुरू करने के बाद हाथ की पोज़िशन का विश्लेषण होगा।");
+</script>
+</body>
+</html>
